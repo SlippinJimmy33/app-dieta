@@ -89,6 +89,17 @@ export type LogEntryRow = {
   updated_at: string
 }
 
+export type DayPlanRow = {
+  user_id: string
+  day: string
+  activities: unknown
+  meal_times: unknown
+  mode_overrides: unknown
+  bedtime: string | null
+  created_at: string
+  updated_at: string
+}
+
 /** Insert shape: the listed columns are required, everything else (ids, owner, timestamps, defaults) optional. */
 type InsertOf<Row, Required extends keyof Row> = Pick<Row, Required> & Partial<Omit<Row, Required>>
 
@@ -101,6 +112,7 @@ export type Database = {
       food_categories: Table<FoodCategoryRow, InsertOf<FoodCategoryRow, 'name'>>
       foods: Table<FoodRow, InsertOf<FoodRow, 'name' | 'kcal' | 'protein_g' | 'carbs_g' | 'fat_g'>>
       recipe_ingredients: Table<RecipeIngredientRow, InsertOf<RecipeIngredientRow, 'recipe_id' | 'ingredient_id' | 'grams'>>
+      day_plans: Table<DayPlanRow, InsertOf<DayPlanRow, 'day'>>
       // Name and nutrients are a snapshot filled by a trigger, so clients only send these.
       log_entries: Table<
         LogEntryRow,

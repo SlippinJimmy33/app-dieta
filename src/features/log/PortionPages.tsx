@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router'
+import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { ScreenShell } from '../../components/ui/ScreenShell'
 import { dayTitle, type ISODate } from '../../lib/dates'
 import { formatInt } from '../../lib/format'
@@ -8,6 +8,7 @@ import type { Food } from '../pantry/types'
 import { useCategories, useFoods } from '../pantry/usePantry'
 import { dayHref, dayQuery } from './dayQuery'
 import { mealInfo } from './meals'
+import { parseGrams } from './portion'
 import { PortionEditor } from './PortionEditor'
 import type { LogEntry } from './types'
 import { useAddEntry, useDayEntries, useDeleteEntry, useUpdateEntry } from './useLog'
@@ -44,6 +45,8 @@ export function AddPortionPage() {
   const { foodId } = useParams()
   const navigate = useNavigate()
   const { today, day, meal } = useLogParams()
+  // A suggested plate links here with its amount (?g=).
+  const suggestedGrams = parseGrams(useSearchParams()[0].get('g') ?? '')
   const foodsQuery = useFoods()
   const add = useAddEntry()
   const food = foodsQuery.data?.find((f) => f.id === foodId)
@@ -70,7 +73,7 @@ export function AddPortionPage() {
         eyebrow={eyebrow}
         per100g={per100gOf(food)}
         unit={unit}
-        initialGrams={unit?.grams ?? 100}
+        initialGrams={suggestedGrams ?? unit?.grams ?? 100}
         initialMeal={meal}
         submitLabel={(m) => `Afegir ${mealInfo(m).target}`}
         busy={add.isPending}

@@ -9,6 +9,8 @@ import { createSupabaseGoalsApi, createSupabaseLogApi } from '../features/log/su
 import { FoodFormPage } from '../features/pantry/FoodFormPage'
 import { PantryPage } from '../features/pantry/PantryPage'
 import { createSupabasePantryApi } from '../features/pantry/supabasePantryApi'
+import { createSupabasePlanApi } from '../features/plan/planApi'
+import { PlanDayPage } from '../features/plan/PlanDayPage'
 import { ComingSoonPage } from '../features/placeholder/ComingSoonPage'
 import { ProfilePage } from '../features/profile/ProfilePage'
 import { TodayPage } from '../features/today/TodayPage'
@@ -39,6 +41,7 @@ export function AppRoutes() {
           <Route path="rebost/nou" element={<FoodFormPage />} />
           <Route path="rebost/:id" element={<FoodFormPage />} />
           <Route path="perfil/objectius" element={<GoalsPage />} />
+          <Route path="pla" element={<PlanDayPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
@@ -48,7 +51,12 @@ export function AppRoutes() {
 
 // Without Supabase (development demo) everything lives in memory, seeded with sample data.
 const api: Api = supabase
-  ? { pantry: createSupabasePantryApi(supabase), log: createSupabaseLogApi(supabase), goals: createSupabaseGoalsApi(supabase) }
+  ? {
+      pantry: createSupabasePantryApi(supabase),
+      log: createSupabaseLogApi(supabase),
+      goals: createSupabaseGoalsApi(supabase),
+      plan: createSupabasePlanApi(supabase),
+    }
   : createDemoApi()
 
 export function App() {

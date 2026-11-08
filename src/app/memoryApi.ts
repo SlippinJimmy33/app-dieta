@@ -3,6 +3,7 @@ import { createMemoryGoalsApi, createMemoryLogApi } from '../features/log/memory
 import type { GoalValues } from '../features/log/types'
 import type { MealSlot } from '../lib/database.types'
 import { createMemoryPantryApi, demoFoods } from '../features/pantry/memoryPantryApi'
+import { createMemoryPlanApi } from '../features/plan/planApi'
 import type { Api } from './apiContext'
 
 type MemoryApiOptions = {
@@ -17,6 +18,7 @@ export function createMemoryApi({ foods = [], goal }: MemoryApiOptions = {}): Ap
     pantry,
     log: createMemoryLogApi((id) => pantry.getFood(id)),
     goals: createMemoryGoalsApi(goal),
+    plan: createMemoryPlanApi(),
   }
 }
 
@@ -40,5 +42,6 @@ export function createDemoApi(today: Date = new Date()): Api {
     pantry,
     log,
     goals: createMemoryGoalsApi({ from: '2026-01-01', values: { kcal: 2100, protein_g: 140, carbs_g: 230, fat_g: 70 } }),
+    plan: createMemoryPlanApi(),
   }
 }

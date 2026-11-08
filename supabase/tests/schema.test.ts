@@ -262,10 +262,34 @@ describe('food photos storage', () => {
   })
 })
 
+describe('day plans', () => {
+  it('stores one plan per user and day, private to its owner', async () => {
+    const plan = JSON.stringify([{ kind: 'forca', start: '18:30', minutes: 60 }])
+    await asUser(ALICE, () =>
+      db.query("insert into public.day_plans (day, activities, bedtime) values ('2026-11-08', $1, '23:30')", [plan]),
+    )
+    // Same day again replaces via upsert, never duplicates.
+    await asUser(ALICE, () =>
+      db.query(
+        "insert into public.day_plans (day, activities) values ('2026-11-08', '[]') on conflict (user_id, day) do update set activities = excluded.activities",
+      ),
+    )
+    const mine = await asUser(ALICE, () => rows<{ activities: unknown[] }>('select activities from public.day_plans'))
+    expect(mine).toEqual([{ activities: [] }])
+    expect(await asUser(BOB, () => rows('select * from public.day_plans'))).toHaveLength(0)
+  })
+
+  it('rejects malformed plans', async () => {
+    await expect(
+      asUser(ALICE, () => db.query("insert into public.day_plans (day, activities) values ('2026-11-09', '{}')")),
+    ).rejects.toThrow(/day_plans_activities_check/)
+  })
+})
+
 describe('account deletion', () => {
   it('removes every row of the user', async () => {
     await db.query('delete from auth.users where id = $1', [BOB])
-    for (const table of ['profiles', 'food_categories', 'foods', 'log_entries', 'nutrition_goals']) {
+    for (const table of ['profiles', 'food_categories', 'foods', 'log_entries', 'nutrition_goals', 'day_plans']) {
       const column = table === 'profiles' ? 'id' : 'user_id'
       const left = await rows(`select 1 from public.${table} where ${column} = $1`, [BOB])
       expect(left, table).toHaveLength(0)

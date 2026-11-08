@@ -15,6 +15,10 @@ import { entryNutrients, summarizeDay } from '../log/daySummary'
 import { mealInfo } from '../log/meals'
 import { useDayEntries, useGoal } from '../log/useLog'
 import { pantryErrorMessage } from '../pantry/pantryErrors'
+import { assignModes, isPlannedMeal } from '../plan/engine'
+import { ModeTag } from '../plan/ModeTag'
+import { RecommendationsPanel } from '../plan/RecommendationsPanel'
+import { useDayPlan } from '../plan/usePlan'
 import { RecommendationsToggle } from '../recommendations/RecommendationsToggle'
 
 export function TodayPage() {
@@ -35,8 +39,12 @@ export function TodayPage() {
   const addHref = (slot: MealSlot) => `/afegir${dayQuery(day, today, { apat: slot })}`
 
   const overBy = goal ? Math.round(total.kcal) - goal.kcal : 0
-  // Off by default; what it unlocks (smart-eating suggestions) comes next.
+  // Off by default; when on, the day plan drives a mode and a suggested plate for each meal.
   const [recommendations, setRecommendations] = useStoredState('app-dieta:recommendations', false)
+  const planQuery = useDayPlan(day, recommendations)
+  const plan = recommendations ? (planQuery.data ?? null) : null
+  const modeOf = (slot: MealSlot) => (plan && isPlannedMeal(slot) ? assignModes(plan).find((i) => i.meal === slot)?.mode : undefined)
+  const eatenKcal = Object.fromEntries(summary.meals.map((m) => [m.slot, m.total.kcal]))
 
   return (
     <>
@@ -99,6 +107,11 @@ export function TodayPage() {
 
       <div className="px-6 pt-8">
         <RecommendationsToggle enabled={recommendations} onChange={setRecommendations} />
+        {recommendations && planQuery.isSuccess && loaded && (
+          <div className="pt-3">
+            <RecommendationsPanel day={day} today={today} plan={plan} goalKcal={goal?.kcal ?? null} eatenKcal={eatenKcal} />
+          </div>
+        )}
       </div>
 
       {entriesQuery.isError ? (
@@ -115,9 +128,12 @@ export function TodayPage() {
             return (
               <section key={meal.slot} aria-labelledby={`meal-${meal.slot}`} className="flex flex-col gap-2">
                 <div className="flex items-center justify-between gap-3">
-                  <h2 id={`meal-${meal.slot}`} className="m-0 text-[15px] font-medium tracking-[-0.01em]">
-                    {info.label}
-                  </h2>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <h2 id={`meal-${meal.slot}`} className="m-0 text-[15px] font-medium tracking-[-0.01em]">
+                      {info.label}
+                    </h2>
+                    {modeOf(meal.slot) && <ModeTag mode={modeOf(meal.slot)!} size="sm" />}
+                  </div>
                   <div className="flex items-center gap-3">
                     {meal.entries.length > 0 && (
                       <span className="font-mono text-[11px] text-muted">{formatInt(meal.total.kcal)} kcal</span>
