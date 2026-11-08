@@ -38,7 +38,10 @@ beforeAll(async () => {
   for (const file of migrations) {
     await db.exec(readFileSync(join(root, 'migrations', file), 'utf8'))
   }
-  await db.query('insert into auth.users (id, email) values ($1, $2), ($3, $4)', [ALICE, 'a@test', BOB, 'b@test'])
+  await db.query(
+    `insert into auth.users (id, email, raw_user_meta_data) values ($1, $2, $3), ($4, $5, '{}')`,
+    [ALICE, 'a@test', JSON.stringify({ display_name: '  Alice  ' }), BOB, 'b@test'],
+  )
 }, 60_000)
 
 afterAll(async () => {
@@ -47,8 +50,10 @@ afterAll(async () => {
 
 describe('signup', () => {
   it('creates a profile and the default categories for each new user', async () => {
-    const profiles = await asUser(ALICE, () => rows<{ id: string }>('select id from public.profiles'))
-    expect(profiles).toEqual([{ id: ALICE }])
+    const profiles = await asUser(ALICE, () => rows('select id, display_name from public.profiles'))
+    expect(profiles).toEqual([{ id: ALICE, display_name: 'Alice' }])
+    const bob = await asUser(BOB, () => rows('select display_name from public.profiles'))
+    expect(bob).toEqual([{ display_name: null }])
 
     const categories = await asUser(ALICE, () =>
       rows<{ name: string }>('select name from public.food_categories order by sort_order'),
@@ -219,6 +224,19 @@ describe('log entries', () => {
     expect(entry.after.food_name).toBe('Mel')
     expect(Number(entry.after.kcal)).toBe(60.8)
     expect(Number(entry.resized.kcal)).toBe(121.6)
+  })
+
+  it('accepts an insert with only food, grams, day and meal (what the app sends)', async () => {
+    const entry = await asUser(ALICE, async () => {
+      const foodId = await insertFood('Arròs', { kcal: 130, protein_g: 2.7, carbs_g: 28, fat_g: 0.3 })
+      const [e] = await rows<Entry>(
+        "insert into public.log_entries (eaten_on, meal, food_id, grams) values ('2026-11-08', 'dinar', $1, 200) returning *",
+        [foodId],
+      )
+      return e
+    })
+    expect(entry.food_name).toBe('Arròs')
+    expect(Number(entry.kcal)).toBe(260)
   })
 
   it('requires a food on insert', async () => {

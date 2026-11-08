@@ -16,6 +16,8 @@
   --color-track: #ededf0;
   --color-accent: #2f5bff;
   --color-fat: #a1a1a6;
+  --color-danger: #c4001a;
+  --color-danger-soft: #fff0f1;
 
   --radius-tile: 28px;
 }
@@ -60,6 +62,16 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--color-muted);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
   }
 }
 

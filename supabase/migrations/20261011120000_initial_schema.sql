@@ -197,7 +197,7 @@ $$;
 create trigger log_entries_snapshot before insert or update on public.log_entries
   for each row execute function public.fill_log_entry_snapshot();
 
--- New account: profile + default categories.
+-- New account: profile (name from the signup form, trimmed and length-capped) + default categories.
 create function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -205,7 +205,8 @@ security definer
 set search_path = ''
 as $$
 begin
-  insert into public.profiles (id) values (new.id);
+  insert into public.profiles (id, display_name)
+  values (new.id, nullif(left(btrim(new.raw_user_meta_data ->> 'display_name'), 60), ''));
   insert into public.food_categories (user_id, name, sort_order)
   select new.id, c.name, c.ord
   from unnest(array['Fruita', 'Verdura', 'Cereals', 'Proteïna', 'Làctics', 'Greixos', 'Dolç', 'Begudes'])
