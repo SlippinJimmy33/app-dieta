@@ -2,6 +2,9 @@
 
 PWA per registrar els teus aliments habituals (amb foto retallada), comptar calories i macros, i organitzar els àpats.
 
+**App publicada:** https://slippinjimmy33.github.io/app-dieta/ — cada push a `main` passa els tests i es publica sola
+(GitHub Actions → GitHub Pages). La URL i la clau pública de Supabase són variables del repositori.
+
 ## Stack
 
 Vite + React + TypeScript, Tailwind CSS v4, React Router. Tests amb Vitest i Testing Library.
