@@ -2,13 +2,14 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { createFakeAuth, renderApp } from '../../test/renderApp'
-import { createMemoryPantryApi, demoFoods } from './memoryPantryApi'
+import { createMemoryApi } from '../../app/memoryApi'
+import { demoFoods } from './memoryPantryApi'
 import { pantryKeys } from './usePantry'
 
-function setup(path: string, pantry = createMemoryPantryApi(demoFoods)) {
+function setup(path: string, api = createMemoryApi({ foods: demoFoods })) {
   const user = userEvent.setup()
-  const view = renderApp(path, createFakeAuth({ signedIn: true }), { pantry })
-  return { user, pantry, ...view }
+  const view = renderApp(path, createFakeAuth({ signedIn: true }), { api })
+  return { user, pantry: api.pantry, ...view }
 }
 
 const foodNames = () =>
@@ -45,15 +46,15 @@ describe('pantry list', () => {
   })
 
   it('shows an inviting empty state for a new account', async () => {
-    setup('/rebost', createMemoryPantryApi())
+    setup('/rebost', createMemoryApi())
     expect(await screen.findByRole('link', { name: 'Afegir el primer aliment' })).toHaveAttribute('href', '/rebost/nou')
     expect(screen.queryByRole('searchbox')).not.toBeInTheDocument()
   })
 
   it('explains load errors and can retry', async () => {
-    const pantry = createMemoryPantryApi(demoFoods)
-    const listFoods = vi.spyOn(pantry, 'listFoods').mockRejectedValueOnce(new TypeError('Failed to fetch'))
-    const { user } = setup('/rebost', pantry)
+    const api = createMemoryApi({ foods: demoFoods })
+    const listFoods = vi.spyOn(api.pantry, 'listFoods').mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    const { user } = setup('/rebost', api)
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Sense connexió')
     await user.click(screen.getByRole('button', { name: 'Tornar-ho a provar' }))

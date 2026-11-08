@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router'
+import { NavLink, useLocation } from 'react-router'
 import { Icon, type IconName } from '../components/ui/Icon'
 
 type Tab = { to: string; label: string; icon: IconName }
@@ -36,6 +36,11 @@ function TabLink({ to, label, icon }: Tab) {
 }
 
 export function TabBar() {
+  const location = useLocation()
+  // From a past day on the day view, the + logs to that day.
+  const day = location.pathname === '/' ? new URLSearchParams(location.search).get('dia') : null
+  const addTo = day ? `/afegir?${new URLSearchParams({ dia: day })}` : '/afegir'
+
   return (
     <nav
       aria-label="Navegació principal"
@@ -45,7 +50,7 @@ export function TabBar() {
         <TabLink key={tab.to} {...tab} />
       ))}
       <NavLink
-        to="/afegir"
+        to={addTo}
         aria-label="Afegir"
         className="flex size-[52px] items-center justify-center rounded-full bg-ink text-white shadow-[0_6px_18px_rgb(10_10_10/0.25)] transition-transform active:scale-95"
       >

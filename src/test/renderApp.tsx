@@ -7,8 +7,8 @@ import { AppRoutes } from '../app/App'
 import { DataProvider } from '../app/DataProvider'
 import type { AuthClient } from '../features/auth/authContext'
 import { AuthProvider } from '../features/auth/AuthProvider'
-import { createMemoryPantryApi } from '../features/pantry/memoryPantryApi'
-import type { PantryApi } from '../features/pantry/types'
+import type { Api } from '../app/apiContext'
+import { createMemoryApi } from '../app/memoryApi'
 
 export const TEST_PASSWORD = 'contrasenya-correcta'
 
@@ -65,13 +65,13 @@ export function createFakeAuth({ signedIn = false } = {}) {
   return client as typeof client & AuthClient
 }
 
-type RenderOptions = { allowDemo?: boolean; pantry?: PantryApi }
+type RenderOptions = { allowDemo?: boolean; api?: Api }
 
-export function renderApp(path: string, client: AuthClient | null, { allowDemo = false, pantry }: RenderOptions = {}) {
+export function renderApp(path: string, client: AuthClient | null, { allowDemo = false, api = createMemoryApi() }: RenderOptions = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
   const view = render(
     <AuthProvider client={client} allowDemo={allowDemo}>
-      <DataProvider api={{ pantry: pantry ?? createMemoryPantryApi() }} queryClient={queryClient}>
+      <DataProvider api={api} queryClient={queryClient}>
         <MemoryRouter initialEntries={[path]}>
           <AppRoutes />
         </MemoryRouter>

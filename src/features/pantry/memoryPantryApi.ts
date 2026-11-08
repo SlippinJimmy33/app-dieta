@@ -2,21 +2,28 @@ import type { Food, FoodCategory, FoodInput, PantryApi } from './types'
 
 const categoryNames = ['Fruita', 'Verdura', 'Cereals', 'Proteïna', 'Làctics', 'Greixos', 'Dolç', 'Begudes']
 
-type Seed = Pick<FoodInput, 'name' | 'kcal' | 'protein_g' | 'carbs_g' | 'fat_g'> & { category: string }
+type Seed = Pick<FoodInput, 'name' | 'kcal' | 'protein_g' | 'carbs_g' | 'fat_g'> &
+  Partial<Pick<FoodInput, 'unit_name' | 'unit_grams'>> & { category: string }
 
 export const demoFoods: Seed[] = [
-  { name: 'Poma', category: 'Fruita', kcal: 52, protein_g: 0.3, carbs_g: 14, fat_g: 0.2 },
-  { name: 'Plàtan', category: 'Fruita', kcal: 89, protein_g: 1.1, carbs_g: 22.8, fat_g: 0.3 },
+  { name: 'Poma', category: 'Fruita', kcal: 52, protein_g: 0.3, carbs_g: 14, fat_g: 0.2, unit_name: '1 unitat', unit_grams: 180 },
+  { name: 'Plàtan', category: 'Fruita', kcal: 89, protein_g: 1.1, carbs_g: 22.8, fat_g: 0.3, unit_name: '1 unitat', unit_grams: 120 },
   { name: 'Arròs bullit', category: 'Cereals', kcal: 130, protein_g: 2.7, carbs_g: 28, fat_g: 0.3 },
   { name: 'Pit de pollastre', category: 'Proteïna', kcal: 165, protein_g: 31, carbs_g: 0, fat_g: 3.6 },
   { name: 'Mel', category: 'Dolç', kcal: 304, protein_g: 0.3, carbs_g: 82, fat_g: 0 },
 ]
 
+export type MemoryPantryApi = PantryApi & {
+  /** Any food, archived ones included — what the log needs to take snapshots. */
+  getFood(id: string): Food | undefined
+  findFoodByName(name: string): Food | undefined
+}
+
 /**
  * Pantry kept in memory: used in demo mode (no Supabase) and in tests.
  * Mirrors the database rules that matter to the UI, like unique active names.
  */
-export function createMemoryPantryApi(seed: Seed[] = []): PantryApi {
+export function createMemoryPantryApi(seed: Seed[] = []): MemoryPantryApi {
   const now = () => new Date().toISOString()
   const categories: FoodCategory[] = categoryNames.map((name, i) => ({
     id: `cat-${i + 1}`,
@@ -52,10 +59,16 @@ export function createMemoryPantryApi(seed: Seed[] = []): PantryApi {
   for (const s of seed) {
     const { category, ...values } = s
     const categoryId = categories.find((c) => c.name === category)?.id ?? null
-    foods.push(toFood(crypto.randomUUID(), { ...values, category_id: categoryId, unit_name: null, unit_grams: null }))
+    foods.push(toFood(crypto.randomUUID(), { unit_name: null, unit_grams: null, ...values, category_id: categoryId }))
   }
 
   return {
+    getFood(id) {
+      return foods.find((f) => f.id === id)
+    },
+    findFoodByName(name) {
+      return foods.find((f) => !f.archived_at && f.name === name)
+    },
     async listCategories() {
       return [...categories]
     },

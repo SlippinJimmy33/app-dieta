@@ -2,8 +2,11 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 import { AuthProvider } from '../features/auth/AuthProvider'
 import { LoginPage } from '../features/auth/LoginPage'
 import { RequireAuth } from '../features/auth/RequireAuth'
+import { GoalsPage } from '../features/goals/GoalsPage'
+import { AddFoodPage } from '../features/log/AddFoodPage'
+import { AddPortionPage, EditEntryPage } from '../features/log/PortionPages'
+import { createSupabaseGoalsApi, createSupabaseLogApi } from '../features/log/supabaseLogApi'
 import { FoodFormPage } from '../features/pantry/FoodFormPage'
-import { createMemoryPantryApi, demoFoods } from '../features/pantry/memoryPantryApi'
 import { PantryPage } from '../features/pantry/PantryPage'
 import { createSupabasePantryApi } from '../features/pantry/supabasePantryApi'
 import { ComingSoonPage } from '../features/placeholder/ComingSoonPage'
@@ -13,32 +16,40 @@ import { supabase } from '../lib/supabase'
 import type { Api } from './apiContext'
 import { AppShell } from './AppShell'
 import { DataProvider } from './DataProvider'
+import { createDemoApi } from './memoryApi'
+import { ScrollToTop } from './ScrollToTop'
 
 export function AppRoutes() {
   return (
-    <Routes>
-      <Route path="entrar" element={<LoginPage />} />
-      <Route element={<RequireAuth />}>
-        <Route element={<AppShell />}>
-          <Route index element={<TodayPage />} />
-          <Route path="rebost" element={<PantryPage />} />
-          <Route path="afegir" element={<ComingSoonPage eyebrow="Nou registre" title="Afegir" />} />
-          <Route path="progres" element={<ComingSoonPage eyebrow="La teva evolució" title="Progrés" />} />
-          <Route path="perfil" element={<ProfilePage />} />
+    <>
+      <ScrollToTop />
+      <Routes>
+        <Route path="entrar" element={<LoginPage />} />
+        <Route element={<RequireAuth />}>
+          <Route element={<AppShell />}>
+            <Route index element={<TodayPage />} />
+            <Route path="rebost" element={<PantryPage />} />
+            <Route path="progres" element={<ComingSoonPage eyebrow="La teva evolució" title="Progrés" />} />
+            <Route path="perfil" element={<ProfilePage />} />
+          </Route>
+          {/* Full-screen flows: no tab bar, their main button takes its place. */}
+          <Route path="afegir" element={<AddFoodPage />} />
+          <Route path="afegir/:foodId" element={<AddPortionPage />} />
+          <Route path="registre/:entryId" element={<EditEntryPage />} />
+          <Route path="rebost/nou" element={<FoodFormPage />} />
+          <Route path="rebost/:id" element={<FoodFormPage />} />
+          <Route path="perfil/objectius" element={<GoalsPage />} />
         </Route>
-        {/* Full-screen forms: no tab bar, the save button takes its place. */}
-        <Route path="rebost/nou" element={<FoodFormPage />} />
-        <Route path="rebost/:id" element={<FoodFormPage />} />
-      </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   )
 }
 
-// Without Supabase (development demo) the pantry lives in memory, seeded with the sample foods.
-const api: Api = {
-  pantry: supabase ? createSupabasePantryApi(supabase) : createMemoryPantryApi(demoFoods),
-}
+// Without Supabase (development demo) everything lives in memory, seeded with sample data.
+const api: Api = supabase
+  ? { pantry: createSupabasePantryApi(supabase), log: createSupabaseLogApi(supabase), goals: createSupabaseGoalsApi(supabase) }
+  : createDemoApi()
 
 export function App() {
   return (

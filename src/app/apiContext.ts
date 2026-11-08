@@ -1,8 +1,11 @@
 import { createContext, useContext } from 'react'
+import type { GoalsApi, LogApi } from '../features/log/types'
 import type { PantryApi } from '../features/pantry/types'
 
 export type Api = {
   pantry: PantryApi
+  log: LogApi
+  goals: GoalsApi
 }
 
 export const ApiContext = createContext<Api | null>(null)

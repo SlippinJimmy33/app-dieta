@@ -1,9 +1,9 @@
-import { useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { useRef, useState, type FormEvent } from 'react'
+import { useNavigate, useParams } from 'react-router'
 import { FoodAvatar } from '../../components/food/FoodAvatar'
 import { Button } from '../../components/ui/Button'
 import { Chip } from '../../components/ui/Chip'
-import { Icon } from '../../components/ui/Icon'
+import { BottomBar, ScreenShell } from '../../components/ui/ScreenShell'
 import { TextField } from '../../components/ui/TextField'
 import { formatInt } from '../../lib/format'
 import {
@@ -29,40 +29,22 @@ export function FoodFormPage() {
   if (!id) return <FoodForm key="new" />
 
   if (foodsQuery.isPending) {
-    return <FormShell title="Editar aliment">{null}</FormShell>
+    return <ScreenShell backTo="/rebost" backLabel="Tornar al rebost" title="Editar aliment">{null}</ScreenShell>
   }
 
   const food = foodsQuery.data?.find((f) => f.id === id)
   if (!food) {
     return (
-      <FormShell title="Aliment no trobat">
+      <ScreenShell backTo="/rebost" backLabel="Tornar al rebost" title="Aliment no trobat">
         <p className="m-0 px-6 pt-6 text-[15px] text-muted">
           {foodsQuery.isError ? pantryErrorMessage(foodsQuery.error) : 'Potser l’has arxivat o l’enllaç no és correcte.'}
         </p>
-      </FormShell>
+      </ScreenShell>
     )
   }
 
   // Keyed so the form state starts fresh from this food's saved values.
   return <FoodForm key={food.id} food={food} />
-}
-
-function FormShell({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <div className="relative mx-auto min-h-dvh max-w-[430px] bg-white">
-      <header className="flex items-center gap-3 px-6 pt-[calc(24px+env(safe-area-inset-top))]">
-        <Link
-          to="/rebost"
-          aria-label="Tornar al rebost"
-          className="flex size-11 shrink-0 items-center justify-center rounded-full bg-surface text-ink"
-        >
-          <Icon name="back" size={20} strokeWidth={1.8} />
-        </Link>
-        <h1 className="m-0 truncate text-[22px] font-medium tracking-[-0.02em]">{title}</h1>
-      </header>
-      {children}
-    </div>
-  )
 }
 
 function FoodForm({ food }: { food?: Food }) {
@@ -132,7 +114,7 @@ function FoodForm({ food }: { food?: Food }) {
   const busy = save.isPending || archive.isPending
 
   return (
-    <FormShell title={food ? 'Editar aliment' : 'Nou aliment'}>
+    <ScreenShell backTo="/rebost" backLabel="Tornar al rebost" title={food ? 'Editar aliment' : 'Nou aliment'}>
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-7 px-6 pt-6 pb-[calc(120px+env(safe-area-inset-bottom))]">
         <div aria-hidden="true" className="flex items-center gap-4 rounded-tile bg-surface p-4">
           <FoodAvatar name={values.name || '·'} size={64} />
@@ -254,12 +236,12 @@ function FoodForm({ food }: { food?: Food }) {
           </div>
         )}
 
-        <div className="glass fixed bottom-[calc(16px+env(safe-area-inset-bottom))] left-1/2 z-20 w-[calc(min(100vw,430px)-40px)] -translate-x-1/2 rounded-full p-1.5">
+        <BottomBar>
           <Button type="submit" className="w-full" disabled={busy}>
             {save.isPending ? 'Desant…' : food ? 'Desar canvis' : 'Afegir al rebost'}
           </Button>
-        </div>
+        </BottomBar>
       </form>
-    </FormShell>
+    </ScreenShell>
   )
 }
