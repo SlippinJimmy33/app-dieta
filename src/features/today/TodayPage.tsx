@@ -8,12 +8,14 @@ import { ProgressRing } from '../../components/ui/ProgressRing'
 import type { MealSlot } from '../../lib/database.types'
 import { addDays, dayTitle, fromISODate, isISODate, type ISODate } from '../../lib/dates'
 import { formatDayLabel, formatGrams, formatInt } from '../../lib/format'
+import { useStoredState } from '../../lib/useStoredState'
 import { useToday } from '../../lib/useToday'
 import { dayQuery } from '../log/dayQuery'
 import { entryNutrients, summarizeDay } from '../log/daySummary'
 import { mealInfo } from '../log/meals'
 import { useDayEntries, useGoal } from '../log/useLog'
 import { pantryErrorMessage } from '../pantry/pantryErrors'
+import { RecommendationsToggle } from '../recommendations/RecommendationsToggle'
 
 export function TodayPage() {
   const today = useToday()
@@ -33,6 +35,8 @@ export function TodayPage() {
   const addHref = (slot: MealSlot) => `/afegir${dayQuery(day, today, { apat: slot })}`
 
   const overBy = goal ? Math.round(total.kcal) - goal.kcal : 0
+  // Off by default; what it unlocks (smart-eating suggestions) comes next.
+  const [recommendations, setRecommendations] = useStoredState('app-dieta:recommendations', false)
 
   return (
     <>
@@ -93,6 +97,10 @@ export function TodayPage() {
         <MacroStat label="Greixos" value={total.fat} goal={goal?.fat_g} color="var(--color-fat)" />
       </section>
 
+      <div className="px-6 pt-8">
+        <RecommendationsToggle enabled={recommendations} onChange={setRecommendations} />
+      </div>
+
       {entriesQuery.isError ? (
         <div role="alert" className="mx-6 mt-8 flex flex-col items-start gap-4 rounded-tile bg-surface p-5">
           <p className="m-0 text-[15px]">{pantryErrorMessage(entriesQuery.error)}</p>
@@ -101,7 +109,7 @@ export function TodayPage() {
           </Button>
         </div>
       ) : (
-        <div aria-busy={!loaded} className="flex flex-col gap-6 px-6 pt-8">
+        <div aria-busy={!loaded} className="flex flex-col gap-6 px-6 pt-7">
           {summary.meals.map((meal) => {
             const info = mealInfo(meal.slot)
             return (
