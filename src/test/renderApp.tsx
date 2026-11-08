@@ -1,10 +1,14 @@
 import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js'
+import { QueryClient } from '@tanstack/react-query'
 import { render } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { vi } from 'vitest'
 import { AppRoutes } from '../app/App'
+import { DataProvider } from '../app/DataProvider'
 import type { AuthClient } from '../features/auth/authContext'
 import { AuthProvider } from '../features/auth/AuthProvider'
+import { createMemoryPantryApi } from '../features/pantry/memoryPantryApi'
+import type { PantryApi } from '../features/pantry/types'
 
 export const TEST_PASSWORD = 'contrasenya-correcta'
 
@@ -61,12 +65,18 @@ export function createFakeAuth({ signedIn = false } = {}) {
   return client as typeof client & AuthClient
 }
 
-export function renderApp(path: string, client: AuthClient | null, { allowDemo = false } = {}) {
-  return render(
+type RenderOptions = { allowDemo?: boolean; pantry?: PantryApi }
+
+export function renderApp(path: string, client: AuthClient | null, { allowDemo = false, pantry }: RenderOptions = {}) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+  const view = render(
     <AuthProvider client={client} allowDemo={allowDemo}>
-      <MemoryRouter initialEntries={[path]}>
-        <AppRoutes />
-      </MemoryRouter>
+      <DataProvider api={{ pantry: pantry ?? createMemoryPantryApi() }} queryClient={queryClient}>
+        <MemoryRouter initialEntries={[path]}>
+          <AppRoutes />
+        </MemoryRouter>
+      </DataProvider>
     </AuthProvider>,
   )
+  return { ...view, queryClient }
 }
