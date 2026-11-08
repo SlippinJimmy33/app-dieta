@@ -55,7 +55,8 @@ export function App() {
   return (
     <AuthProvider client={supabase?.auth ?? null} allowDemo={import.meta.env.DEV}>
       <DataProvider api={api}>
-        <BrowserRouter>
+        {/* BASE_URL is "/" locally and "/app-dieta/" on GitHub Pages. */}
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
           <AppRoutes />
         </BrowserRouter>
       </DataProvider>
