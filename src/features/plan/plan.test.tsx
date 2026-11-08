@@ -25,8 +25,9 @@ function setup(path = '/') {
 
 async function planWorkAndGym(user: ReturnType<typeof userEvent.setup>) {
   await user.click(await screen.findByRole('link', { name: /Com serà el dia\?/ }))
-  await user.click(await screen.findByRole('button', { name: 'Feina + gimnàs' }))
-  await user.click(screen.getByRole('button', { name: 'Desar el pla del dia' }))
+  await user.click(within(await screen.findByRole('group', { name: 'Entrenes avui?' })).getByRole('button', { name: 'Força' }))
+  await user.click(within(screen.getByRole('group', { name: 'Deep work?' })).getByRole('button', { name: 'Matí' }))
+  await user.click(screen.getByRole('button', { name: 'Fet, recomana’m els àpats' }))
   await screen.findByRole('heading', { level: 1, name: 'Avui' })
 }
 
@@ -38,7 +39,8 @@ describe('planning the day', () => {
 
   it('previews the mode of each meal while you describe the day', async () => {
     const { user } = setup('/pla')
-    await user.click(await screen.findByRole('button', { name: 'Feina + gimnàs' }))
+    await user.click(within(await screen.findByRole('group', { name: 'Entrenes avui?' })).getByRole('button', { name: 'Força' }))
+    await user.click(within(screen.getByRole('group', { name: 'Deep work?' })).getByRole('button', { name: 'Matí' }))
     const day = screen.getByRole('region', { name: 'El teu dia' })
     const snack = within(day).getByText('Berenar').closest('li')!
     expect(snack).toHaveTextContent('Pre-entrenament')
@@ -47,18 +49,32 @@ describe('planning the day', () => {
     expect(within(day).getByText('Esmorzar').closest('li')).toHaveTextContent('Focus')
   })
 
-  it('adds, edits and removes activities', async () => {
+  it('distinguishes strength and cardio, and asks "when" only if you train', async () => {
     const { user } = setup('/pla')
-    await user.click(await screen.findByRole('button', { name: 'Afegir activitat' }))
-    await user.click(screen.getByRole('button', { name: 'Cardio' }))
-    expect(screen.getByRole('button', { name: 'Treure Cardio de les 07:30' })).toBeInTheDocument()
-    expect(within(screen.getByRole('region', { name: 'El teu dia' })).getByText('Esmorzar').closest('li')).toHaveTextContent(
-      'Recuperació',
-    )
-    await user.click(screen.getByRole('button', { name: 'Treure Cardio de les 07:30' }))
-    expect(screen.getByText('Cap activitat: un dia tranquil.')).toBeInTheDocument()
+    const training = await screen.findByRole('group', { name: 'Entrenes avui?' })
+    expect(screen.queryByRole('group', { name: 'Quan?' })).not.toBeInTheDocument()
+
+    await user.click(within(training).getByRole('button', { name: 'Cardio' }))
+    await user.click(within(screen.getByRole('group', { name: 'Quan?' })).getByRole('button', { name: 'Matí' }))
+    const day = screen.getByRole('region', { name: 'El teu dia' })
+    expect(within(day).getByText('Cardio')).toBeInTheDocument()
+    expect(within(day).getByText('Esmorzar').closest('li')).toHaveTextContent('Cardio a les 10:00, d’aquí 1 h 30 min.')
+
+    await user.click(within(training).getByRole('button', { name: 'No' }))
+    expect(within(day).queryByText('Cardio')).not.toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Quan?' })).not.toBeInTheDocument()
   })
 
+  it('opens an existing plan with its answers selected', async () => {
+    const { user } = setup()
+    await planWorkAndGym(user)
+    await user.click(screen.getByRole('link', { name: 'Editar' }))
+    expect(within(await screen.findByRole('group', { name: 'Entrenes avui?' })).getByRole('button', { name: 'Força' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(within(screen.getByRole('group', { name: 'Deep work?' })).getByRole('button', { name: 'Matí' })).toHaveAttribute('aria-pressed', 'true')
+  })
   it('saves the plan and shows it on the day, with each meal’s mode', async () => {
     const { user } = setup()
     await planWorkAndGym(user)
