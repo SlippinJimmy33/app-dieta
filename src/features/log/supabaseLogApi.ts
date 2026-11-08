@@ -40,7 +40,17 @@ export function createSupabaseGoalsApi(client: SupabaseClient<Database>): GoalsA
         .limit(1)
         .maybeSingle()
       if (error) throw error
-      return data
+      if (data) return data
+
+      // Days before the very first goal use that first goal, rather than showing "no goal".
+      const first = await client
+        .from('nutrition_goals')
+        .select('*')
+        .order('valid_from', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+      if (first.error) throw first.error
+      return first.data
     },
 
     async saveGoal(from, values) {

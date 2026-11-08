@@ -18,7 +18,7 @@ export type LogApi = {
 }
 
 export type GoalsApi = {
-  /** The goal in force on that day: the latest one set on or before it. */
+  /** The goal in force on that day: the latest one set on or before it, or the first goal for earlier days. */
   goalFor(day: ISODate): Promise<NutritionGoal | null>
   /** Sets the goal from that day on; setting it twice on the same day replaces it. */
   saveGoal(from: ISODate, values: GoalValues): Promise<NutritionGoal>

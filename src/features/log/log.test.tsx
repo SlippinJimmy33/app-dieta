@@ -176,6 +176,12 @@ describe('goals', () => {
 
     await user.click(screen.getByRole('link', { name: 'Avui' }))
     expect(await screen.findByText('de 2.000 kcal')).toBeInTheDocument()
+
+    // The first goal also applies to the days before it.
+    await user.click(screen.getByRole('button', { name: 'Dia anterior' }))
+    await screen.findByRole('heading', { level: 1, name: 'Ahir' })
+    expect(await screen.findByText('de 2.000 kcal')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Defineix el teu objectiu/ })).not.toBeInTheDocument()
   })
 
   it('flags macros that do not add up to the calorie goal', async () => {

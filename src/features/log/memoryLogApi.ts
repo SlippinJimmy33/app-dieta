@@ -82,7 +82,9 @@ export function createMemoryGoalsApi(initial?: { from: ISODate; values: GoalValu
 
   const api: GoalsApi = {
     async goalFor(day) {
-      return goals.filter((g) => g.valid_from <= day).sort((a, b) => b.valid_from.localeCompare(a.valid_from))[0] ?? null
+      const byDate = [...goals].sort((a, b) => a.valid_from.localeCompare(b.valid_from))
+      // The latest goal set on or before that day; days before the first goal use the first one.
+      return byDate.filter((g) => g.valid_from <= day).at(-1) ?? byDate[0] ?? null
     },
     async saveGoal(from, values) {
       const goal: NutritionGoal = {

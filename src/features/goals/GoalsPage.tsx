@@ -65,7 +65,9 @@ function GoalsForm({ goal, today }: { goal: NutritionGoal | null; today: string 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-7 px-6 pt-6 pb-[calc(120px+env(safe-area-inset-bottom))]">
       <p className="m-0 text-[15px] text-muted">
-        S’apliquen des d’avui. Els dies anteriors conserven l’objectiu que tenien.
+        {goal
+          ? 'S’apliquen des d’avui. Els dies anteriors conserven l’objectiu que tenien.'
+          : 'Són els teus primers objectius: també s’aplicaran als dies anteriors.'}
       </p>
 
       <TextField
